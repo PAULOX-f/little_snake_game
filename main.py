@@ -1,26 +1,41 @@
 import pygame as pg
+import random as rd
+
+size = width, height = 1200, 800
+grid = 50
+qtd_colunas = width // grid
+qtd_linhas = height // grid
 
 pg.init()
 pg.display.set_caption("Snake")
-size = width, height = 1200, 800
-grid = 50
 screen = pg.display.set_mode(size)
 clock = pg.time.Clock()
-snake = [
-    (12, 8),
-    (11, 8),
-    (10, 8)
-        ]
-dt = 0
-lastKeyPressed = None
 running = True
+
+snake = [
+    (12, 8)
+        ]
+
+dt = 0
+
+lastKeyPressed = None
+isFruit = False
 
 move_timer = 0
 move_interval = 0.1
 
 while running:
+
+    while isFruit == False:
+        x_fruit = rd.randrange(qtd_colunas)
+        y_fruit = rd.randrange(qtd_linhas)
+
+        fruit = (x_fruit, y_fruit)
+
+        if fruit not in snake:
+            isFruit = True
+    
     ct = clock.tick(60)
-    snake_aux = snake.copy()
     for event in pg.event.get():
         if event.type == pg.QUIT:
             running = False
@@ -35,53 +50,54 @@ while running:
             if event.key == pg.K_d:
                 lastKeyPressed = pg.K_d
 
-    move_timer += dt
-    print(move_timer)
     dt = ct / 1000.0  # Delta time in seconds
+    move_timer += dt
 
     if move_timer >= move_interval:
-        move_timer = 0
+        snake_aux = snake.copy()
+        tail = snake_aux[-1]
 
         if lastKeyPressed == pg.K_w:
             x, y = snake[0]
             snake[0] = (x, y - 1)
 
-            snake[1] = snake_aux[0]
-            snake[2] = snake_aux[1]
-
         if lastKeyPressed == pg.K_s:
             x, y = snake[0]
             snake[0] = (x, y + 1)
-            snake[1] = snake_aux[0]
-            snake[2] = snake_aux[1]
 
         if lastKeyPressed == pg.K_a:
             x, y = snake[0]
             snake[0] = (x - 1, y)
-            snake[1] = snake_aux[0]
-            snake[2] = snake_aux[1]
             
         if lastKeyPressed == pg.K_d:
             x, y = snake[0]
             snake[0] = (x + 1, y)
 
-            snake[1] = snake_aux[0]
-            snake[2] = snake_aux[1]
+
+        for i in range(1, len(snake)):
+            snake[i] = snake_aux[i - 1]
+
+        move_timer = 0
+
+        if snake[0] == fruit:
+                isFruit = False
+                snake.append(tail)
 
     screen.fill("black")  # Clear the screen with black
+    if isFruit == True:
+            pg.draw.rect(screen, (255, 0, 0), (fruit[0] * grid, fruit[1] * grid, grid, grid))
     for segment in snake:
         x, y = segment
-        pg.draw.rect(screen,(255, 0, 0),(x * grid, y * grid, grid, grid))
+        pg.draw.rect(screen,(0, 255, 0),(x * grid, y * grid, grid, grid))
 
     pg.display.flip() 
 
-    if snake[0][0] < 0 or snake[0][0] >= width // grid or snake[0][1] < 0 or snake[0][1] >= height // grid:
+    if snake[0][0] < 0 or snake[0][0] >= width // grid or snake[0][1] < 0 or snake[0][1] >= height // grid or snake[0] in snake[1:]:
         snake = [
         (width // grid // 2, height // grid // 2),
-        (width // grid // 2 - 1, height // grid // 2),
-        (width // grid // 2 - 2, height // grid // 2)
         ]
         lastKeyPressed = None
+        isFruit = False
 
 
 pg.quit()
