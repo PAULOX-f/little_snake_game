@@ -1,7 +1,7 @@
 import pygame as pg
 import random as rd
 
-size = width, height = 1200, 800
+size = width, height = 800, 600
 grid = 50
 qtd_colunas = width // grid
 qtd_linhas = height // grid
@@ -20,6 +20,7 @@ dt = 0
 
 lastKeyPressed = None
 isFruit = False
+direction = None
 
 move_timer = 0
 move_interval = 0.1
@@ -41,13 +42,13 @@ while running:
             running = False
 
         if event.type == pg.KEYDOWN:
-            if event.key == pg.K_w:
+            if event.key == pg.K_w and direction != "down":
                 lastKeyPressed = pg.K_w
-            if event.key == pg.K_s: 
+            if event.key == pg.K_s and direction != "up":
                 lastKeyPressed = pg.K_s
-            if event.key == pg.K_a:
+            if event.key == pg.K_a and direction != "right":
                 lastKeyPressed = pg.K_a
-            if event.key == pg.K_d:
+            if event.key == pg.K_d and direction != "left":
                 lastKeyPressed = pg.K_d
 
     dt = ct / 1000.0  # Delta time in seconds
@@ -60,18 +61,26 @@ while running:
         if lastKeyPressed == pg.K_w:
             x, y = snake[0]
             snake[0] = (x, y - 1)
+            if len(snake) > 1:
+                direction = "up"
 
         if lastKeyPressed == pg.K_s:
             x, y = snake[0]
             snake[0] = (x, y + 1)
+            if len(snake) > 1:
+                direction = "down"
 
         if lastKeyPressed == pg.K_a:
             x, y = snake[0]
             snake[0] = (x - 1, y)
-            
+            if len(snake) > 1:
+                direction = "left"
+
         if lastKeyPressed == pg.K_d:
             x, y = snake[0]
             snake[0] = (x + 1, y)
+            if len(snake) > 1:
+                direction = "right"
 
 
         for i in range(1, len(snake)):
@@ -98,6 +107,7 @@ while running:
         ]
         lastKeyPressed = None
         isFruit = False
+        direction = None
 
 
 pg.quit()
