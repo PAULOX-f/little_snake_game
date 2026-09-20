@@ -1,20 +1,30 @@
 import pygame as pg
 import random as rd
+import snake as snk
+import fruit as frt
+import event_controller as evc
 
-size = width, height = 800, 600
+size = width, height = 1200, 800
 grid = 50
 qtd_colunas = width // grid
 qtd_linhas = height // grid
+centro_x = qtd_colunas // 2
+centro_y = qtd_linhas // 2
 
 pg.init()
+pg.font.init()
 pg.display.set_caption("Snake")
 screen = pg.display.set_mode(size)
 clock = pg.time.Clock()
 running = True
 
+font = pg.font.SysFont("Arial", 30, bold=True)
+
+score = 0
 snake = [
-    (12, 8)
+    (centro_x, centro_y)
         ]
+fruit = None
 
 dt = 0
 
@@ -23,33 +33,17 @@ isFruit = False
 direction = None
 
 move_timer = 0
-move_interval = 0.1
+move_interval = 0.15
 
 while running:
 
-    while isFruit == False:
-        x_fruit = rd.randrange(qtd_colunas)
-        y_fruit = rd.randrange(qtd_linhas)
-
-        fruit = (x_fruit, y_fruit)
-
-        if fruit not in snake:
-            isFruit = True
+    lastKeyPressed, direction, should_quit = evc.handle_events(lastKeyPressed, direction)
+    if should_quit:
+        running = False
+    
+    fruit, isFruit = frt.generate_fruit(snake, qtd_colunas, qtd_linhas, isFruit, fruit)
     
     ct = clock.tick(60)
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
-            running = False
-
-        if event.type == pg.KEYDOWN:
-            if event.key == pg.K_w and direction != "down":
-                lastKeyPressed = pg.K_w
-            if event.key == pg.K_s and direction != "up":
-                lastKeyPressed = pg.K_s
-            if event.key == pg.K_a and direction != "right":
-                lastKeyPressed = pg.K_a
-            if event.key == pg.K_d and direction != "left":
-                lastKeyPressed = pg.K_d
 
     dt = ct / 1000.0  # Delta time in seconds
     move_timer += dt
@@ -58,56 +52,32 @@ while running:
         snake_aux = snake.copy()
         tail = snake_aux[-1]
 
-        if lastKeyPressed == pg.K_w:
-            x, y = snake[0]
-            snake[0] = (x, y - 1)
-            if len(snake) > 1:
-                direction = "up"
-
-        if lastKeyPressed == pg.K_s:
-            x, y = snake[0]
-            snake[0] = (x, y + 1)
-            if len(snake) > 1:
-                direction = "down"
-
-        if lastKeyPressed == pg.K_a:
-            x, y = snake[0]
-            snake[0] = (x - 1, y)
-            if len(snake) > 1:
-                direction = "left"
-
-        if lastKeyPressed == pg.K_d:
-            x, y = snake[0]
-            snake[0] = (x + 1, y)
-            if len(snake) > 1:
-                direction = "right"
-
-
-        for i in range(1, len(snake)):
-            snake[i] = snake_aux[i - 1]
+        snake, direction = snk.move_snake(snake, snake_aux, lastKeyPressed, direction)
 
         move_timer = 0
 
         if snake[0] == fruit:
                 isFruit = False
                 snake.append(tail)
+                score += 1
 
     screen.fill("black")  # Clear the screen with black
-    if isFruit == True:
+    if isFruit:
             pg.draw.rect(screen, (255, 0, 0), (fruit[0] * grid, fruit[1] * grid, grid, grid))
-    for segment in snake:
-        x, y = segment
-        pg.draw.rect(screen,(0, 255, 0),(x * grid, y * grid, grid, grid))
+    
+    snk.draw_snake(screen, snake, grid)
+
+    font_surface = font.render(f"Score: {score}", True, (255, 255, 255))
+    screen.blit(font_surface, (10, 10))
 
     pg.display.flip() 
 
-    if snake[0][0] < 0 or snake[0][0] >= width // grid or snake[0][1] < 0 or snake[0][1] >= height // grid or snake[0] in snake[1:]:
-        snake = [
-        (width // grid // 2, height // grid // 2),
-        ]
+    if snk.snake_collision(snake, width, height, grid):
+        snake = [(centro_x, centro_y)]
         lastKeyPressed = None
         isFruit = False
         direction = None
+        score = 0
 
 
 pg.quit()
